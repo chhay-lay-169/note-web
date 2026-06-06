@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useNoteStore } from './stores/noteStore';
-import { Search, Plus, SortAsc, Filter, StickyNote, Loader2 } from '@lucide/vue';
+import { useAuthStore } from './stores/authStore';
+import { Search, Plus, SortAsc, Filter, StickyNote, Loader2, LogOut } from '@lucide/vue';
 import NoteCard from './components/NoteCard.vue';
 import NoteEditor from './components/NoteEditor.vue';
 import AuthView from './components/AuthView.vue';
 
 const noteStore = useNoteStore();
-const isAuthenticated = ref(false); // Default to false to show login page
+const authStore = useAuthStore();
 const isCreating = ref(false);
 const searchQuery = ref('');
 const sortBy = ref('date');
 
 onMounted(() => {
-    noteStore.fetchNotes();
+    if (authStore.isAuthenticated) {
+        noteStore.fetchNotes();
+    }
 });
+
+const handleLogout = () => {
+    authStore.logout();
+};
 
 const handleSearch = () => {
     noteStore.setSearchQuery(searchQuery.value);
@@ -60,7 +67,7 @@ const cancelEdit = () => {
 </script>
 
 <template>
-    <div v-if="isAuthenticated" class="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+    <div v-if="authStore.isAuthenticated" class="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
         <!-- Header -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -93,6 +100,14 @@ const cancelEdit = () => {
                     >
                         <Plus :size="18" class="mr-1.5" />
                         New Note
+                    </button>
+
+                    <button 
+                        @click="handleLogout"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        title="Log Out"
+                    >
+                        <LogOut :size="20" />
                     </button>
                 </div>
             </div>

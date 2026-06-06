@@ -1,11 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { StickyNote, Mail, Lock, User } from '@lucide/vue';
+import { ref, reactive } from 'vue';
+import { useAuthStore } from '../stores/authStore';
+import { StickyNote, Mail, Lock, User, Loader2, AlertCircle } from '@lucide/vue';
 
+const authStore = useAuthStore();
 const isLogin = ref(true);
+
+const form = reactive({
+    email: '',
+    password: '',
+    name: '' // Included in UI but not strictly used by current backend Login/Register DTOs
+});
 
 const toggleMode = () => {
     isLogin.value = !isLogin.value;
+    authStore.error = null;
+};
+
+const handleSubmit = async () => {
+    if (isLogin.value) {
+        await authStore.login({
+            email: form.email,
+            password: form.password
+        });
+    } else {
+        const success = await authStore.register({
+            email: form.email,
+            password: form.password
+        });
+        if (success) {
+            // After successful registration, switch to login
+            isLogin.value = true;
+            authStore.error = null;
+        }
+    }
 };
 </script>
 
@@ -24,7 +52,13 @@ const toggleMode = () => {
                 </p>
             </div>
 
-            <form class="space-y-4" @submit.prevent>
+            <!-- Error Message -->
+            <div v-if="authStore.error" class="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start text-red-600 text-sm">
+                <AlertCircle class="mr-2 shrink-0" :size="18" />
+                <span>{{ authStore.error }}</span>
+            </div>
+
+            <form class="space-y-4" @submit.prevent="handleSubmit">
                 <div v-if="!isLogin" class="relative">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                     <div class="relative">
@@ -32,6 +66,7 @@ const toggleMode = () => {
                             <User :size="18" />
                         </span>
                         <input 
+                            v-model="form.name"
                             type="text" 
                             placeholder="John Doe" 
                             class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all"
@@ -46,7 +81,9 @@ const toggleMode = () => {
                             <Mail :size="18" />
                         </span>
                         <input 
+                            v-model="form.email"
                             type="email" 
+                            required
                             placeholder="you@example.com" 
                             class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all"
                         >
@@ -60,7 +97,9 @@ const toggleMode = () => {
                             <Lock :size="18" />
                         </span>
                         <input 
+                            v-model="form.password"
                             type="password" 
+                            required
                             placeholder="••••••••" 
                             class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all"
                         >
@@ -68,8 +107,11 @@ const toggleMode = () => {
                 </div>
 
                 <button 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md shadow-blue-100"
+                    type="submit"
+                    :disabled="authStore.loading"
+                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all shadow-md shadow-blue-100 flex items-center justify-center"
                 >
+                    <Loader2 v-if="authStore.loading" class="animate-spin mr-2" :size="20" />
                     {{ isLogin ? 'Sign in' : 'Register' }}
                 </button>
             </form>
