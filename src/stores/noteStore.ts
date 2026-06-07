@@ -5,6 +5,7 @@ import type { Note, NoteListDto, NoteDetailDto, NoteCreateDto, NoteUpdateDto } f
 export const useNoteStore = defineStore('notes', {
     state: () => ({
         notes: [] as NoteListDto[],
+        filteredNotes: [] as NoteListDto[],
         currentNote: null as NoteDetailDto | null,
         loading: false,
         error: null as string | null,
@@ -15,12 +16,9 @@ export const useNoteStore = defineStore('notes', {
         async fetchNotes() {
             this.loading = true;
             try {
-                const params = new URLSearchParams();
-                if (this.searchQuery) params.append('search', this.searchQuery);
-                if (this.sortBy) params.append('sortBy', this.sortBy);
-
-                const response = await apiClient.get<NoteListDto[]>(`/notes?${params.toString()}`);
+                const response = await apiClient.get<NoteListDto[]>(`/notes`);
                 this.notes = response.data;
+                this.filteredNotes = response.data;
             } catch (err: any) {
                 this.error = err.message || 'Failed to fetch notes';
             } finally {

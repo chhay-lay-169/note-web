@@ -51,7 +51,12 @@ export const useAuthStore = defineStore('auth', {
 
             try {
                 // We use the refresh token in the Authorization header for this specific request
-                const response = await apiClient.post<TokenResponseDto>('/auth/refresh', {}, {
+                const response = await apiClient.post<TokenResponseDto>('/auth/refresh', 
+                {
+                    accessToken: this.token,
+                    refreshToken: this.refreshToken
+                },
+                {
                     headers: {
                         Authorization: `Bearer ${this.refreshToken}`
                     }

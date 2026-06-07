@@ -24,14 +24,22 @@ const handleLogout = () => {
 };
 
 const handleSearch = () => {
-    noteStore.setSearchQuery(searchQuery.value);
+    noteStore.filteredNotes = noteStore.notes.filter(n => n.title.toLowerCase().includes(searchQuery.value.toLowerCase()));
 };
 
 const handleSort = (e: Event) => {
     const value = (e.target as HTMLSelectElement).value;
-    sortBy.value = value;
-    noteStore.setSortBy(value);
+    // console.log(value);
+    // sortBy.value = value;
+    // noteStore.setSortBy(value);
+    if (value === 'date') {
+        noteStore.filteredNotes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (value === 'title') {
+        // Standard alphabetical sort handling casing differences gracefully
+        noteStore.filteredNotes.sort((a, b) => a.title.localeCompare(b.title));
+    }
 };
+
 
 const selectNote = async (id: number) => {
     isCreating.value = false;
@@ -137,7 +145,7 @@ const cancelEdit = () => {
                         
                         <template v-else-if="noteStore.notes.length > 0">
                             <NoteCard 
-                                v-for="note in noteStore.notes" 
+                                v-for="note in noteStore.filteredNotes" 
                                 :key="note.id" 
                                 :note="note"
                                 :isActive="noteStore.currentNote?.id === note.id"
