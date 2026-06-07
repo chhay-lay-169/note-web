@@ -1,24 +1,42 @@
 import { defineStore } from 'pinia';
 import apiClient from '../api/client';
-import type { Note, NoteListDto, NoteDetailDto, NoteCreateDto, NoteUpdateDto } from '../types/note';
+import type { NoteListDto, NoteDetailDto, NoteCreateDto, NoteUpdateDto } from '../types/note';
 
 export const useNoteStore = defineStore('notes', {
     state: () => ({
         notes: [] as NoteListDto[],
-        filteredNotes: [] as NoteListDto[],
         currentNote: null as NoteDetailDto | null,
         loading: false,
         error: null as string | null,
         searchQuery: '',
         sortBy: 'date',
     }),
+    getters: {
+        filteredNotes(state): NoteListDto[] {
+            let result = [...state.notes];
+            
+            // Apply search
+            if (state.searchQuery) {
+                const query = state.searchQuery.toLowerCase();
+                result = result.filter(n => n.title.toLowerCase().includes(query));
+            }
+            
+            // Apply sort
+            if (state.sortBy === 'date') {
+                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            } else if (state.sortBy === 'title') {
+                result.sort((a, b) => a.title.localeCompare(b.title));
+            }
+            
+            return result;
+        }
+    },
     actions: {
         async fetchNotes() {
             this.loading = true;
             try {
                 const response = await apiClient.get<NoteListDto[]>(`/notes`);
                 this.notes = response.data;
-                this.filteredNotes = response.data;
             } catch (err: any) {
                 this.error = err.message || 'Failed to fetch notes';
             } finally {
@@ -82,11 +100,9 @@ export const useNoteStore = defineStore('notes', {
         },
         setSearchQuery(query: string) {
             this.searchQuery = query;
-            this.fetchNotes();
         },
         setSortBy(sort: string) {
             this.sortBy = sort;
-            this.fetchNotes();
         }
     }
 });

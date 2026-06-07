@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, Plus, SortAsc, Clock, Trash2 } from '@lucide/vue';
+import { Clock, Trash2 } from '@lucide/vue';
 import type { NoteListDto } from '../types/note';
 
 defineProps<{
